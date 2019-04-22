@@ -16,6 +16,7 @@ This offline version is for testing map loading and saving, and keeps the interf
 ## Change log
 
 These changes are necessary to fix build errors
+ - In **socket.h**: add `#define` related to using windows socket utility
  - In **loadstatus.h**: add `s{w,n}printf` definition
 
 ## How to build
@@ -25,6 +26,7 @@ These changes are necessary to fix build errors
  - Run the makefile (Use msys on MinGW or GUN Make)
  - Use Code::Block to build Irrlicht win32-gcc version .a and .dll files
  - Follow [the guide](https://github.com/open-source-parsers/jsoncpp/wiki/Amalgamated) to build JsonCpp amalgamated source and add it to the project
+ - Make sure WS2_32 and gdi32 libraries are in the **Libraries** option of the OMNet++ project **Property**
  - Add **Irrlicht.dll** and **libjthread.dll** to the output folder that contains the .exe file after building the project
 
 ## Note

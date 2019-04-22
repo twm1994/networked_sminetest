@@ -84,6 +84,10 @@ protected:
 	// Be sure to set this to NULL when the cached sector is deleted
 	MapSector *m_sector_cache;
 	v2s16 m_sector_cache_p;
+	// -----Store created nodes-----
+	core::map<v3s16, s16> m_nodes;
+	// -----handle background loading-----
+	bool is_loading;
 public:
 	v3s16 drawoffset;
 	//LoadStatus status;
@@ -136,10 +140,6 @@ public:
 
 	MapSector * getSectorNoGenerate(v2s16 p2d);
 	MapBlock * getBlockNoCreate(v3s16 p);
-	// -----load map from m_nodes to m_map----
-	void setSectors(NodeContainer* parent, core::map<v3s16, s16>* nodes);
-	MapBlock * getBlockNodes(NodeContainer* parent, v3s16 pos,
-			core::map<v3s16, s16>* nodes);
 
 	bool isValidPosition(v3s16 p) {
 		v3s16 blockpos = getNodeBlockPos(p);
@@ -159,7 +159,7 @@ public:
 	/*
 	 Returns the position of the block where the node is located
 	 */
-	// -----Keep-----
+
 	v3s16 getNodeBlockPos(v3s16 p) {
 		return v3s16((p.X >= 0 ? p.X : p.X - MAP_BLOCKSIZE + 1) / MAP_BLOCKSIZE,
 				(p.Y >= 0 ? p.Y : p.Y - MAP_BLOCKSIZE + 1) / MAP_BLOCKSIZE,
@@ -180,7 +180,6 @@ public:
 		return getBlockNoCreate(blockpos);
 	}
 
-	// -----Keep-----
 	MapNode getNode(v3s16 p) {
 		v3s16 blockpos = getNodeBlockPos(p);
 		MapBlock * blockref = getBlockNoCreate(blockpos);
@@ -191,12 +190,10 @@ public:
 		return blockref->getNode(relpos);
 	}
 
-	// -----Keep-----
 	MapNode getNode(s16 x, s16 y, s16 z) {
 		return getNode(v3s16(x, y, z));
 	}
 
-	// -----Keep-----
 	void setNode(v3s16 p, MapNode & n) {
 		v3s16 blockpos = getNodeBlockPos(p);
 		MapBlock * blockref = getBlockNoCreate(blockpos);
@@ -206,12 +203,10 @@ public:
 		blockref->setNode(relpos, n);
 	}
 
-	// -----Keep-----
 	void setNode(s16 x, s16 y, s16 z, MapNode & n) {
 		setNode(v3s16(x, y, z), n);
 	}
 
-	// -----Keep-----
 	MapNode getNode(v3f p) {
 		return getNode(floatToInt(p));
 	}
@@ -241,7 +236,6 @@ public:
 //		}
 //	}
 
-	// -----Keep-----
 	void unLightNeighbors(v3s16 pos, f32 oldlight,
 			core::list<v3s16> & light_sources,
 			core::map<v3s16, MapBlock*> & modified_blocks);
@@ -260,6 +254,33 @@ public:
 	 void generateMaster();*/
 	bool updateChangedVisibleArea();
 	void renderMap(video::IVideoDriver* driver, video::SMaterial *materials);
+	// -----Initialize m_map----
+	void setSectors();
+	MapBlock * setBlockNodes(bool atBottom, v3s16 pos);
+	void addBoundary();
+	void addIgnoreNodesZ(s16 blockX, s16 x);
+	void addIgnoreNodesX(s16 blockZ, s16 z);
+//	MapBlock* getIgnoreNodesTop(v3s16 pos);
+	void save();
+//	// -----Check if is loading created nodes in MapUpdateThread-----
+//	bool isLoading() {
+//		return is_loading;
+//	}
+//
+//	void setLoading(bool s) {
+//		is_loading = s;
+//	}
+
+	void addCreatedNodes();
+	void load() {
+		setLoading(true);
+		// -----Generate map in background at start up-----
+		std::cout << "Map::load() loading map" << std::endl;
+		addBoundary();
+		setSectors();
+		addCreatedNodes();
+		setLoading(false);
+	}
 
 };
 
