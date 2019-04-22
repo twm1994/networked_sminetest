@@ -1129,17 +1129,21 @@ MapBlock *Map::fillBlockNodes(v3s16 pos) { // maybe -> MapSector::getBlockNodes(
 }
 
 MapSector* Map::fillSector(v2s16 pos) {
-	time_t t0 = time(nullptr);
-	MapSector* mapSector = new MapSector(this, pos);
-	for (s16 y = 0; y < MAP_HEIGHT; y++) {
-		MapBlock* mapBlock = fillBlockNodes(v3s16(pos.X, y, pos.Y));
-		mapSector->insertBlock(mapBlock);
+	if ((pos.X >= 0) && (pos.X < MAP_LENGTH) && (pos.Y >= 0)
+			&& (pos.Y < MAP_WIDTH)) {
+		time_t t0 = time(nullptr);
+		MapSector* mapSector = new MapSector(this, pos);
+		for (s16 y = 0; y < MAP_HEIGHT; y++) {
+			MapBlock* mapBlock = fillBlockNodes(v3s16(pos.X, y, pos.Y));
+			mapSector->insertBlock(mapBlock);
+		}
+		m_sectors.insert(v2s16(pos.X, pos.Y), mapSector);
+		time_t t1 = time(nullptr);
+		std::cout << "Loaded sector at (" << "pos.X" << "," << pos.Y << ") in "
+				<< difftime(t1, t0) << "ms" << std::endl;
+		return mapSector;
 	}
-	m_sectors.insert(v2s16(pos.X, pos.Y), mapSector);
-	time_t t1 = time(nullptr);
-	std::cout << "Loaded sector at (" << "pos.X" << "," << pos.Y << ") in "
-			<< difftime(t1, t0) << "ms" << std::endl;
-	return mapSector;
+	return nullptr;
 }
 
 MapSector * Map::getSector(v2s16 pos) {
@@ -1160,6 +1164,7 @@ MapBlock * Map::getBlock(v3s16 pos) {
 		return block;
 	} catch (InvalidPositionException &e) {
 	}
+	// -----Don't add anything outside border-----
 	v2s16 sectorPos(pos.X, pos.Z);
 	// -----This will generate a new sector and fill all nodes-----
 	getSector(sectorPos);
