@@ -30,8 +30,8 @@ using namespace jthread;
 //#define MAP_LENGTH 1
 //#define MAP_WIDTH 1
 //#define MAP_HEIGHT 4
-#define MAP_LENGTH 16
-#define MAP_WIDTH 16
+#define MAP_LENGTH 32
+#define MAP_WIDTH 32
 #define MAP_HEIGHT 4
 // Lowest level of map
 #define MAP_BOTTOM 0
@@ -206,7 +206,9 @@ public:
 	void setNode(v3s16 p, MapNode & n) {
 		v3s16 blockpos = getNodeBlockPos(p);
 		MapBlock * blockref = getBlockNoCreate(blockpos);
-		if (blockref == NULL)
+		if (blockref == NULL) {
+
+		}
 			throw InvalidPositionException();
 		v3s16 relpos = p - blockpos * MAP_BLOCKSIZE;
 		blockref->setNode(relpos, n);
@@ -275,8 +277,9 @@ public:
 	bool updateChangedVisibleArea();
 	void renderMap(video::IVideoDriver* driver, video::SMaterial *materials);
 	// -----Initialize m_map----
-	void setSectors();
-	MapBlock * setBlockNodes(bool atBottom, v3s16 pos);
+//	void setSectors();
+//	MapBlock * setBlockNodes(bool atBottom, v3s16 pos);
+//	MapBlock *setBaseLevel(v2s16 pos);
 	void addBoundary();
 	void addIgnoreNodesZ(s16 blockX, s16 x);
 	void addIgnoreNodesX(s16 blockZ, s16 z);
@@ -291,17 +294,22 @@ public:
 		is_loading = s;
 	}
 
-	void addCreatedNodes(const char* fname);
+//	void addCreatedNodes(const char* fname);
+
 	void load(const char* fname) {
 		setLoading(true);
 		// -----Generate map in background at start up-----
 		std::cout << "Map::load() loading map" << std::endl;
 		addBoundary();
-		setSectors();
-		addCreatedNodes(fname);
+//		setSectors();
+		loadCreatedNodes(fname);
 		setLoading(false);
 	}
-
+	void loadCreatedNodes(const char* fname);
+	MapBlock *fillBlockNodes(v3s16 pos);
+	MapSector* fillSector(v2s16 pos);
+	MapSector * getSector(v2s16 pos);
+	MapBlock * getBlock(v3s16 pos);
 };
 
 class Client;

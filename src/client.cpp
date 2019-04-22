@@ -53,15 +53,15 @@ Client::Client(scene::ISceneManager* smgr, video::SMaterial *materials) :
 
 		Player *player = new Player(true, smgr->getRootSceneNode(), smgr, 0);
 		//f32 y = BS*2 + m_env.getMap().getGroundHeight(v2s16(0,0));
-		f32 y = BS * 2 + BS * 20;
-		player->setPosition(v3f(0, y, 0));
+		f32 y = BS * 2;
+		player->setPosition(v3f(1, y, 1));
 		m_env.addPlayer(player);
 
 		//add 5 random npcs
 		for (int i = 0; i < 5; i++) {
 			Npc *npc = new Npc(smgr->getRootSceneNode(), smgr, i + 100);
-			f32 x = ((float) rand() / (float) (RAND_MAX / 2) - 1.0) * 256;
-			f32 z = ((float) rand() / (float) (RAND_MAX / 2) - 1.0) * 256;
+			f32 x = (float) rand() / (float) RAND_MAX * (MAP_LENGTH - 1);
+			f32 z = (float) rand() / (float) RAND_MAX * (MAP_LENGTH - 1);
 			npc->setPosition(v3f(x, y, z));
 			npc->setRotation(
 					v3f(0,
@@ -481,11 +481,11 @@ void Client::addNode(v3s16 nodepos, MapNode n) {
 		return;
 	}
 	//-----Only add node inside boundary-----
-	if ((nodepos.X >= -MAP_LENGTH * MAP_BLOCKSIZE)
+	if ((nodepos.X >= 0)
 			&& (nodepos.X < MAP_LENGTH * MAP_BLOCKSIZE)
-			&& (nodepos.Y >= -MAP_HEIGHT * MAP_BLOCKSIZE)
+			&& (nodepos.Y >= MAP_BOTTOM * MAP_BLOCKSIZE)
 			&& (nodepos.Y < MAP_HEIGHT * MAP_BLOCKSIZE)
-			&& (nodepos.Z >= -MAP_WIDTH * MAP_BLOCKSIZE)
+			&& (nodepos.Z >= 0)
 			&& (nodepos.Z < MAP_WIDTH * MAP_BLOCKSIZE)) {
 		dout_client << "Client::addNode() at: (" << nodepos.X << ","
 				<< nodepos.Y << "," << nodepos.Z << "), type:" << s16(n.d)

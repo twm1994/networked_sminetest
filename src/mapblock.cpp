@@ -145,7 +145,7 @@ u8 MapBlock::getNodeMaterial(v3s16 p) {
 		MapNode n = getNodeParent(p);
 		return n.d;
 	} catch (InvalidPositionException &e) {
-		return MATERIAL_IGNORE;
+		return MATERIAL_AIR;
 	}
 }
 

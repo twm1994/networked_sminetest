@@ -63,6 +63,7 @@ Map::~Map() {
 		MapSector *sector = i.getNode()->getValue();
 		delete sector;
 	}
+	m_nodes.clear();
 }
 
 /*
@@ -797,7 +798,8 @@ bool Map::updateChangedVisibleArea() {
 				// -----Fetch blocks instead of creating new blocks-----
 				// -----Ignore invalid positions to avoid going out of map-----
 				try {
-					MapBlock * block = getBlockNoCreate(v3s16(x, y, z));
+					// -----should point to getBlock----
+					MapBlock * block = getBlock(v3s16(x, y, z));
 					if (block->getChangedFlag()) {
 						if (blocks_changed.empty() == true) {
 							// Print initial message when first is found
@@ -846,71 +848,106 @@ bool Map::updateChangedVisibleArea() {
 	return true;
 }
 
-void Map::setSectors() {
-	time_t t0 = time(nullptr);
-	std::cout << "Loading map" << std::endl;
-	dout_map << "Loading map" << std::endl;
-	for (s16 z = -MAP_WIDTH; z < MAP_WIDTH; z++) {
-		for (s16 x = -MAP_LENGTH; x < MAP_LENGTH; x++) {
-			MapSector* mapSector = new MapSector(this, v2s16(x, z));
-			for (s16 y = MAP_BOTTOM; y < MAP_HEIGHT; y++) {
-				bool atBottom;
-				if (y == MAP_BOTTOM)
-					atBottom = true;
-				else
-					atBottom = false;
-				MapBlock* mapBlock = setBlockNodes(atBottom, v3s16(x, y, z));
-				mapSector->insertBlock(mapBlock);
-			}
-//			mapSector->insertBlock(
-//					getIgnoreNodesTop(v3s16(x, MAP_BOTTOM - 1, z)));
-			m_sectors.insert(v2s16(x, z), mapSector);
-		}
-	}
-	time_t t1 = time(nullptr);
-	std::cout << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
-	dout_map << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
-	dout_map.flush();
-}
+//void Map::setSectors() {
+//	time_t t0 = time(nullptr);
+//	std::cout << "Loading map" << std::endl;
+//	dout_map << "Loading map" << std::endl;
+//	for (s16 z = 0; z < MAP_WIDTH; z++) {
+//		for (s16 x = 0; x < MAP_LENGTH; x++) {
+//			std::cout << "New MapSector at " << "(" << x << "," << z << ")"
+//					<< std::endl;
+//			dout_map << "New MapSector at " << "(" << x << "," << z << ")"
+//					<< std::endl;
+//			MapSector* mapSector = new MapSector(this, v2s16(x, z));
+//			for (s16 y = MAP_BOTTOM; y < MAP_HEIGHT; y++) {
+//				bool atBottom;
+//				if (y == MAP_BOTTOM)
+//					atBottom = true;
+//				else
+//					atBottom = false;
+//				MapBlock* mapBlock = setBlockNodes(atBottom, v3s16(x, y, z));
+//				mapSector->insertBlock(mapBlock);
+//			}
+//			m_sectors.insert(v2s16(x, z), mapSector);
+//		}
+//	}
+//	time_t t1 = time(nullptr);
+//	std::cout << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
+//	dout_map << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
+//	dout_map.flush();
+//}
 
 // pos is block postion
-MapBlock *Map::setBlockNodes(bool atBottom, v3s16 pos) {
-	MapBlock* mapBlock = new MapBlock(this, pos);
-	s16 minX = pos.X * MAP_BLOCKSIZE;
-	s16 minY = pos.Y * MAP_BLOCKSIZE;
-	s16 minZ = pos.Z * MAP_BLOCKSIZE;
-	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
-		for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
-			for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
-				v3s16 nodepos = v3s16(minX + x, minY + y, minZ + z);
-				MapNode node;
-				node.param = 0;
-				if (atBottom && y == 0) {
-					// Base layer of the map is grass
-					node.d = MATERIAL_GRASS;
-					m_nodes.insert(nodepos, s16(node.d));
-				} else {
-					node.d = MATERIAL_AIR;
-				}
-				mapBlock->setNode(x, y, z, node);
-			} // for(int x=0;x<MAP_BLOCKSIZE;x++
-		} // for(int y=0;y<MAP_BLOCKSIZE;y++)
-	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
-	return mapBlock;
-}
+//MapBlock *Map::setBaseLevel(v2s16 pos) {
+//	s16 minX = pos.X * MAP_BLOCKSIZE;
+//	s16 y = MAP_BOTTOM * MAP_BLOCKSIZE;
+//	s16 minZ = pos.Y * MAP_BLOCKSIZE;
+//	MapBlock* mapBlock = new MapBlock(this, v3s16(pos.X, y, pos.Y));
+////	std::cout << "#####Set base level at sector: " << "(" << pos.X << ","
+////			<< pos.Y << ") " << std::endl;
+////	dout_map << "#####Set base level at sector: " << "(" << pos.X << ","
+////			<< pos.Y << ") " << std::endl;
+//	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
+//		for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
+//			v3s16 nodepos = v3s16(minX + x, y, minZ + z);
+//			MapNode node;
+//			node.param = 0;
+//			node.d = MATERIAL_GRASS;
+//			m_nodes.insert(nodepos, s16(node.d));
+//			mapBlock->setNode(x, y, z, node);
+//		} // for(int x=0;x<MAP_BLOCKSIZE;x++)
+//	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
+////	std::cout << "#####Set base level done " << std::endl;
+////	dout_map << "#####Set base level done " << std::endl;
+//	return mapBlock;
+//}
+
+// pos is block postion
+//MapBlock *Map::setBlockNodes(bool atBottom, v3s16 pos) {
+//	MapBlock* mapBlock = new MapBlock(this, pos);
+//	s16 minX = pos.X * MAP_BLOCKSIZE;
+//	s16 minY = pos.Y * MAP_BLOCKSIZE;
+//	s16 minZ = pos.Z * MAP_BLOCKSIZE;
+//	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
+//		for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
+//			for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
+//				v3s16 nodepos = v3s16(minX + x, minY + y, minZ + z);
+//				MapNode node;
+//				node.param = 0;
+//				if (atBottom && y == 0) {
+//					// Base layer of the map is grass
+//					node.d = MATERIAL_GRASS;
+//					m_nodes.insert(nodepos, s16(node.d));
+//				} else {
+//					node.d = MATERIAL_AIR;
+//				}
+////				std::cout << "#####New MapNode at " << "(" << nodepos.X << ","
+////						<< nodepos.Y << "," << nodepos.Z << "), type"
+////						<< int(node.d) << std::endl;
+////				dout_map << "#####New MapNode at " << "(" << nodepos.X << ","
+////						<< nodepos.Y << "," << nodepos.Z << "), type"
+////						<< int(node.d) << std::endl;
+////				mapBlock->setNode(x, y, z, node);
+////				std::cout << "#####New MapNode done " << std::endl;
+////				dout_map << "#####New MapNode done " << std::endl;
+//			} // for(int x=0;x<MAP_BLOCKSIZE;x++
+//		} // for(int y=0;y<MAP_BLOCKSIZE;y++)
+//	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
+//	return mapBlock;
+//}
 
 void Map::addBoundary() {
 	time_t t0 = time(nullptr);
 	std::cout << "Generating boundary" << std::endl;
 	dout_map << "Generating boundary" << std::endl;
-	// alone z-axis: x at -MAP_LENGTH-1 and MAP_LENGTH
+	// alone z-axis: x at -1 and MAP_LENGTH
 	// rightmost row of nodes in the block
-	addIgnoreNodesZ(-MAP_LENGTH - 1, MAP_BLOCKSIZE - 1);
+	addIgnoreNodesZ(-1, MAP_BLOCKSIZE - 1);
 	// leftmost row of nodes in the block
 	addIgnoreNodesZ(MAP_LENGTH, 0);
-	// alone x-axis: z at -MAP_WIDTH-1 and MAP_WIDTH
+	// alone x-axis: z at -1 and MAP_WIDTH
 	// rightmost row of nodes in the block
-	addIgnoreNodesX(-MAP_WIDTH - 1, MAP_BLOCKSIZE - 1);
+	addIgnoreNodesX(-1, MAP_BLOCKSIZE - 1);
 	// leftmost row of nodes in the block
 	addIgnoreNodesX(MAP_WIDTH, 0);
 	time_t t1 = time(nullptr);
@@ -922,7 +959,7 @@ void Map::addBoundary() {
 }
 
 void Map::addIgnoreNodesZ(s16 blockX, s16 x) {
-	for (s16 blockZ = -MAP_WIDTH; blockZ < MAP_WIDTH; blockZ++) {
+	for (s16 blockZ = 0; blockZ < MAP_WIDTH; blockZ++) {
 		MapSector* mapSector = new MapSector(this, v2s16(blockX, blockZ));
 		for (s16 blockY = 0; blockY < MAP_HEIGHT; blockY++) {
 			MapBlock* mapBlock = new MapBlock(this,
@@ -940,7 +977,7 @@ void Map::addIgnoreNodesZ(s16 blockX, s16 x) {
 	}
 }
 void Map::addIgnoreNodesX(s16 blockZ, s16 z) {
-	for (s16 blockX = -MAP_LENGTH; blockX < MAP_LENGTH; blockX++) {
+	for (s16 blockX = 0; blockX < MAP_LENGTH; blockX++) {
 		MapSector* mapSector = new MapSector(this, v2s16(blockX, blockZ));
 		for (s16 blockY = 0; blockY < MAP_HEIGHT; blockY++) {
 			MapBlock* mapBlock = new MapBlock(this,
@@ -974,11 +1011,9 @@ void Map::save(const char* fname) {
 			v3s16 p = i.getNode()->getKey();
 			s16 v = i.getNode()->getValue();
 			// -----air node and base level nodes will not be saved-----
-			if (p.X >= (-MAP_LENGTH * MAP_BLOCKSIZE)
-					&& p.X < (MAP_LENGTH * MAP_BLOCKSIZE)
-					&& p.Y > -MAP_BOTTOM * MAP_BLOCKSIZE
-					&& p.Y < MAP_HEIGHT * MAP_BLOCKSIZE
-					&& p.Z >= (-MAP_WIDTH * MAP_BLOCKSIZE)
+			if (p.X >= 0 && p.X < (MAP_LENGTH * MAP_BLOCKSIZE)
+					&& p.Y > MAP_BOTTOM * MAP_BLOCKSIZE
+					&& p.Y < MAP_HEIGHT * MAP_BLOCKSIZE && p.Z >= 0
 					&& p.Z < (MAP_WIDTH * MAP_BLOCKSIZE)) {
 				Json::Value node;
 				Json::Value pos;
@@ -1007,7 +1042,37 @@ void Map::save(const char* fname) {
 
 }
 
-void Map::addCreatedNodes(const char* fname) {
+//void Map::addCreatedNodes(const char* fname) {
+//	std::ifstream ifs(fname);
+//	if (ifs) {
+//		Json::CharReaderBuilder reader;
+//		Json::Value map;
+//		JSONCPP_STRING errs;
+//		Json::parseFromStream(reader, ifs, &map, &errs);
+//		dout_map << "Loading nodes from file" << std::endl;
+//		std::cout << "Loading nodes from file" << std::endl;
+//		time_t t0 = time(nullptr);
+//		for (Json::Value::const_iterator i = map.begin(); i != map.end(); i++) {
+//			Json::Value pos = (*i)["0"];
+//			v3s16 nodePos = v3s16(pos[0].asInt(), pos[1].asInt(),
+//					pos[2].asInt());
+//			s16 d = (*i)["1"].asInt();
+//			m_nodes.insert(nodePos, d);
+//			MapNode n;
+//			n.d = d;
+//			setNode(nodePos, n);
+//		}
+//		time_t t1 = time(nullptr);
+//		dout_map << "Loaded nodes in " << difftime(t1, t0) << "ms" << std::endl;
+//		dout_map.flush();
+//		std::cout << "Loaded nodes in " << difftime(t1, t0) << "ms"
+//				<< std::endl;
+//	} else {
+//		std::cout << "File does not exist" << std::endl;
+//	}
+//}
+
+void Map::loadCreatedNodes(const char* fname) {
 	std::ifstream ifs(fname);
 	if (ifs) {
 		Json::CharReaderBuilder reader;
@@ -1023,9 +1088,6 @@ void Map::addCreatedNodes(const char* fname) {
 					pos[2].asInt());
 			s16 d = (*i)["1"].asInt();
 			m_nodes.insert(nodePos, d);
-			MapNode n;
-			n.d = d;
-			setNode(nodePos, n);
 		}
 		time_t t1 = time(nullptr);
 		dout_map << "Loaded nodes in " << difftime(t1, t0) << "ms" << std::endl;
@@ -1035,7 +1097,73 @@ void Map::addCreatedNodes(const char* fname) {
 	} else {
 		std::cout << "File does not exist" << std::endl;
 	}
+}
 
+// -----Generate the nodes of a block-----
+// -----This is done through c/s connection in Minetest NMPR-----
+MapBlock *Map::fillBlockNodes(v3s16 pos) { // maybe -> MapSector::getBlockNodes(s16 y)
+	MapBlock* mapBlock = new MapBlock(this, pos);
+	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
+		for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
+			for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
+				s16 minX = pos.X * MAP_BLOCKSIZE;
+				s16 minY = pos.Y * MAP_BLOCKSIZE;
+				s16 minZ = pos.Z * MAP_BLOCKSIZE;
+				v3s16 nodepos = v3s16(minX + x, minY + y, minZ + z);
+				MapNode node;
+				if (nodepos.Y == MAP_BOTTOM) {
+					node.d = MATERIAL_GRASS;
+				} else {
+					core::map<v3s16, s16>::Node *n = m_nodes.find(nodepos);
+					if (n != NULL) {
+						node.d = (n->getValue());
+					} else {
+						node.d = MATERIAL_AIR;
+					}
+				}
+				mapBlock->setNode(x, y, z, node);
+			} // for(int x=0;x<MAP_BLOCKSIZE;x++
+		} // for(int y=0;y<MAP_BLOCKSIZE;y++)
+	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
+	return mapBlock;
+}
+
+MapSector* Map::fillSector(v2s16 pos) {
+	time_t t0 = time(nullptr);
+	MapSector* mapSector = new MapSector(this, pos);
+	for (s16 y = 0; y < MAP_HEIGHT; y++) {
+		MapBlock* mapBlock = fillBlockNodes(v3s16(pos.X, y, pos.Y));
+		mapSector->insertBlock(mapBlock);
+	}
+	m_sectors.insert(v2s16(pos.X, pos.Y), mapSector);
+	time_t t1 = time(nullptr);
+	std::cout << "Loaded sector at (" << "pos.X" << "," << pos.Y << ") in "
+			<< difftime(t1, t0) << "ms" << std::endl;
+	return mapSector;
+}
+
+MapSector * Map::getSector(v2s16 pos) {
+	// Check that it doesn't exist already
+	try {
+		MapSector *sector = getSectorNoGenerate(pos);
+		return sector;
+	} catch (InvalidPositionException &e) {
+
+	}
+	MapSector* mapSector = fillSector(pos);
+	return mapSector;
+}
+
+MapBlock * Map::getBlock(v3s16 pos) {
+	try {
+		MapBlock * block = getBlockNoCreate(pos);
+		return block;
+	} catch (InvalidPositionException &e) {
+	}
+	v2s16 sectorPos(pos.X, pos.Z);
+	// -----This will generate a new sector and fill all nodes-----
+	getSector(sectorPos);
+	return getBlockNoCreate(pos);
 }
 
 ClientMap::ClientMap(Client *client, video::SMaterial *materials,

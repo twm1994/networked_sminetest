@@ -34,7 +34,7 @@ Player::Player(bool is_local, scene::ISceneNode* parent,
 		//avatar_node->setAnimationSpeed(32);
 		// this->animateStand();
 		avatar_node->setScale(v3f(1, 1, 1));
-		avatar_node->setPosition(v3f(0, 0, 0));
+//		avatar_node->setPosition(v3f(0, 0, 0));
 		avatar_node->setRotation(v3f(0, 0, 0));
 	}
 	updateSceneNodePosition();
