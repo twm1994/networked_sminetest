@@ -39,6 +39,7 @@ void * ServerNetworkThread::Thread() {
 Server::Server() :
 		m_env(new Map(), dout_server), m_con(PROTOCOL_ID, 512), m_thread(
 				this) {
+	m_env.getMap().load(SERVER_MAP_FILE);
 	m_env_mutex.Init();
 	m_con_mutex.Init();
 	m_step_dtime_mutex.Init();
@@ -236,19 +237,4 @@ void Server::SendPlayerPositions(float dtime) {
 
 	// Send as unreliable
 	m_con.SendToAll(0, data, false);
-}
-
-void Server::loadMap() {
-	std::ifstream ifs("gened_map.json");
-	Json::CharReaderBuilder reader;
-	Json::Value map;
-	JSONCPP_STRING errs;
-	Json::parseFromStream(reader, ifs, &map, &errs);
-	for (Json::Value::const_iterator i = map.begin(); i != map.end(); i++) {
-		Json::Value pos = (*i)["0"];
-		v3s16 nodePos = v3s16(pos[0].asInt(), pos[1].asInt(), pos[2].asInt());
-		s16 d = (*i)["1"].asInt();
-		m_nodes.insert(nodePos, d);
-	}
-	m_env.getMap().setSectors(&m_env.getMap(), &m_nodes);
 }

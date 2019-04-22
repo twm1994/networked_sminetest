@@ -39,7 +39,7 @@ Client::Client(scene::ISceneManager* smgr, video::SMaterial *materials) :
 						666), dout_client), m_con(PROTOCOL_ID, 512), m_smgr(
 				smgr) {
 	std::cout << "Client::Client() generating map" << std::endl;
-	m_env.getMap().load();
+	m_env.getMap().load(CLIENT_MAP_FILE);
 	//	m_fetchblock_mutex.Init();
 	m_incoming_queue_mutex.Init();
 	m_env_mutex.Init();
@@ -178,11 +178,6 @@ void Client::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 		dout_client.flush();
 		std::cout << "Client::ProcessData() remove node at (" << p.X << ","
 				<< p.Y << "," << p.Z << ")" << std::endl;
-		// -----Don't save air node to reduce file size-----
-		core::map<v3s16, s16>::Node *n = m_nodes.find(p);
-		if (n != NULL) {
-			m_nodes.delink(p);
-		}
 		{
 			JMutexAutoLock envlock(m_env_mutex);
 			m_env.getMap().removeNodeAndUpdate(p);
@@ -451,7 +446,6 @@ void Client::removeNode(v3s16 nodepos) {
 	//-----Avoid destroying boundary and base level-----
 	if (node.d != MATERIAL_IGNORE && nodepos.Y != MAP_BOTTOM) {
 		// -----Add to m_remove_cache to handle removeNode event-----
-		m_remove_cache.push_back(nodepos);
 		dout_client << "Client::removeNode() at: (" << nodepos.X << ","
 				<< nodepos.Y << "," << nodepos.Z << ")" << std::endl;
 		dout_client.flush();
@@ -493,8 +487,6 @@ void Client::addNode(v3s16 nodepos, MapNode n) {
 			&& (nodepos.Y < MAP_HEIGHT * MAP_BLOCKSIZE)
 			&& (nodepos.Z >= -MAP_WIDTH * MAP_BLOCKSIZE)
 			&& (nodepos.Z < MAP_WIDTH * MAP_BLOCKSIZE)) {
-		NodeToAdd nodeToAdd(nodepos, n);
-		m_add_cache.push_back(nodeToAdd);
 		dout_client << "Client::addNode() at: (" << nodepos.X << ","
 				<< nodepos.Y << "," << nodepos.Z << "), type:" << s16(n.d)
 				<< std::endl;
@@ -591,11 +583,4 @@ core::list<Player*> Client::getPlayers() {
 core::list<Npc*> Client::getNpcs() {
 	JMutexAutoLock envlock(m_env_mutex);
 	return m_env.getNpcs();
-}
-
-void Client::saveMap() {
-	m_env.getMap().save();
-}
-void Client::saveMap() {
-	m_env.getMap().save();
 }

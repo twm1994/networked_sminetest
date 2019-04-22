@@ -35,6 +35,9 @@ using namespace jthread;
 #define MAP_HEIGHT 4
 // Lowest level of map
 #define MAP_BOTTOM 0
+
+#define SERVER_MAP_FILE "server_nodes.json"
+#define CLIENT_MAP_FILE "client_nodes.json"
 /*
 
  TODO: Automatically unload blocks from memory and save on disk
@@ -92,7 +95,7 @@ protected:
 	v2s16 m_sector_cache_p;
 	// -----Store created nodes-----
 	core::map<v3s16, s16> m_nodes;
-	// -----handle background loading-----
+	// -----Handle background loading-----
 	bool is_loading;
 public:
 	v3s16 drawoffset;
@@ -278,24 +281,24 @@ public:
 	void addIgnoreNodesZ(s16 blockX, s16 x);
 	void addIgnoreNodesX(s16 blockZ, s16 z);
 //	MapBlock* getIgnoreNodesTop(v3s16 pos);
-	void save();
-//	// -----Check if is loading created nodes in MapUpdateThread-----
-//	bool isLoading() {
-//		return is_loading;
-//	}
-//
-//	void setLoading(bool s) {
-//		is_loading = s;
-//	}
+	void save(const char* fname);
+	// -----Check if is loading created nodes in MapUpdateThread-----
+	bool isLoading() {
+		return is_loading;
+	}
 
-	void addCreatedNodes();
-	void load() {
+	void setLoading(bool s) {
+		is_loading = s;
+	}
+
+	void addCreatedNodes(const char* fname);
+	void load(const char* fname) {
 		setLoading(true);
 		// -----Generate map in background at start up-----
 		std::cout << "Map::load() loading map" << std::endl;
 		addBoundary();
 		setSectors();
-		addCreatedNodes();
+		addCreatedNodes(fname);
 		setLoading(false);
 	}
 

@@ -97,7 +97,9 @@ public:
 	core::list<Player*> getPlayers();
 	core::list<Npc*> getNpcs();
 	// -----For saving map-----
-	void saveMap();
+	void saveMap() {
+		m_env.getMap().save(CLIENT_MAP_FILE);
+	}
 
 //	bool isLoading() {
 //		return m_env.getMap().isLoading();

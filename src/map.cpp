@@ -119,67 +119,6 @@ MapBlock * Map::getBlockNoCreate(v3s16 p3d) {
 	return blockref;
 }
 
-void Map::setSectors(NodeContainer* parent, core::map<v3s16, s16> *nodes) {
-	int start = -MAP_SIZE * MAP_BLOCKSIZE;
-	int stop = MAP_SIZE * MAP_BLOCKSIZE;
-	time_t t0 = time(nullptr);
-	for (int z = start; z < stop; z++) {
-		for (int x = start; x < stop; x++) {
-			MapSector* mapSector = new MapSector(this, v2s16(x, z));
-
-			for (int y = -3; y < 64; y++) {
-				MapBlock* mapBlock = getBlockNodes(parent, v3s16(x, y, z),
-						nodes);
-				mapSector->insertBlock(mapBlock);
-			}
-
-			m_sectors.insert(v2s16(x, z), mapSector);
-		}
-
-	}
-	time_t t1 = time(nullptr);
-	std::cout << "-----Map loading time: " << difftime(t1, t0) << std::endl;
-	// -----set MATERIAL_IGNORE to prevent falling-----
-	for (int z = start; z < stop; z++) {
-		int x = start - 1;
-		int y = -4;
-		MapSector* mapSector = new MapSector(this, v2s16(x, z));
-		MapBlock* mapBlock = new MapBlock(parent, pos);
-		mapSector->insertBlock(mapBlock);
-		m_sectors.insert(v2s16(x, z), mapSector);
-		x = stop;
-		MapSector* mapSector = new MapSector(this, v2s16(x, z));
-		MapBlock* mapBlock = new MapBlock(parent, pos);
-		mapSector->insertBlock(mapBlock);
-		m_sectors.insert(v2s16(x, z), mapSector);
-	}
-}
-
-// pos is block postion
-MapBlock *Map::getBlockNodes(NodeContainer* parent, v3s16 pos,
-		core::map<v3s16, s16> *nodes) {
-	MapBlock* mapBlock = new MapBlock(parent, pos);
-	for (int z = 0; z < MAP_BLOCKSIZE; z++) {
-		for (int y = 0; y < MAP_BLOCKSIZE; y++) {
-			for (int x = 0; x < MAP_BLOCKSIZE; x++) {
-				s16 minX = pos.X * MAP_BLOCKSIZE;
-				s16 minY = pos.Y * MAP_BLOCKSIZE;
-				s16 minZ = pos.Z * MAP_BLOCKSIZE;
-				v3s16 nodepos = v3s16(minX + x, minY + y, minZ + z);
-				core::map<v3s16, s16>::Node *n = nodes->find(nodepos);
-				if (n != NULL) {
-//					s16 nType = n->getValue();
-					MapNode node;
-					u8 d[2] = { n->getValue(), 0 };
-					node.deSerialize(d);
-					mapBlock->setNode(x, y, z, node);
-				}
-			} // for(int x=0;x<MAP_BLOCKSIZE;x++
-		} // for(int y=0;y<MAP_BLOCKSIZE;y++)
-	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
-	return mapBlock;
-}
-
 /*
  TODO: Check the order of changing lighting and recursing in
  these functions (choose the faster one)
@@ -1019,7 +958,7 @@ void Map::addIgnoreNodesX(s16 blockZ, s16 z) {
 	}
 }
 
-void Map::save() {
+void Map::save(const char* fname) {
 	dout_map << "Size of m_nodes:" << m_nodes.size() << std::endl;
 	std::cout << "Size of m_nodes:" << m_nodes.size() << std::endl;
 	if (m_nodes.size() > 0) {
@@ -1054,7 +993,7 @@ void Map::save() {
 		}
 		dout_map << "# nodes saved: " << node_count << std::endl;
 		std::cout << "# nodes saved: " << node_count << std::endl;
-		std::ofstream ofs("created_nodes.json");
+		std::ofstream ofs(fname);
 		writer->write(map, &ofs);
 		time_t t1 = time(nullptr);
 		dout_map << "Saved map in " << difftime(t1, t0) << "ms" << std::endl;
@@ -1068,8 +1007,8 @@ void Map::save() {
 
 }
 
-void Map::addCreatedNodes() {
-	std::ifstream ifs("created_nodes.json");
+void Map::addCreatedNodes(const char* fname) {
+	std::ifstream ifs(fname);
 	if (ifs) {
 		Json::CharReaderBuilder reader;
 		Json::Value map;

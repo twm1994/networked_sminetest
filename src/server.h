@@ -46,12 +46,12 @@ public:
 	void AsyncRunStep();
 	void Receive();
 	void ProcessData(u8 *data, u32 datasize, u16 peer_id);
-	// -----For loading map-----
-	void loadMap();
+	void saveMap() {
+		m_env.getMap().save(SERVER_MAP_FILE);
+	}
+
 private:
 	void SendPlayerPositions(float dtime);
-	// -----Container for MapNode excluding air node-----
-	core::map<v3s16, s16> m_nodes;
 	Environment m_env;
 	JMutex m_env_mutex;
 	con::Connection m_con;

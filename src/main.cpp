@@ -766,6 +766,7 @@ int main() {
 		}
 		// ----Save the map at exit-----
 		client.saveMap();
+		server->saveMap();
 		if (server != NULL)
 			delete server;
 	} // client is deleted at this point
