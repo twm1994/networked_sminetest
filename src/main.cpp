@@ -54,20 +54,10 @@ u16 g_selected_material = 0;
  */
 
 std::ofstream dfile("debug.txt");
-//std::ofstream fileMapClient("map_client.json");
-//std::ostream mapClient(fileMapClient.rdbuf());
-//std::ofstream fileMapServer("map_server.json");
-//std::ostream mapServer(fileMapServer.rdbuf());
-
-// Connection
 std::ostream dout_con(dfile.rdbuf());
-
-// Server;
 std::ostream dout_server(dfile.rdbuf());
-
-// Client
 std::ostream dout_client(dfile.rdbuf());
-
+std::ostream dout_map(dfile.rdbuf());
 Player *player;
 class MyEventReceiver: public IEventReceiver {
 public:
@@ -190,16 +180,11 @@ int main() {
 	/*
 	 Initialization
 	 */
-
 	srand(time(0));
-
 	g_viewing_range_nodes_mutex.Init();
 	assert(g_viewing_range_nodes_mutex.IsInitialized());
-
 	MyEventReceiver receiver;
-
 	// create device and exit if creation failed
-
 	/*
 	 Host selection
 	 */
@@ -207,14 +192,12 @@ int main() {
 	// std::cout<<std::endl<<std::endl;
 	// std::cout<<"Address to connect to [empty = host a game]: ";
 	// std::cin.getline(connect_name, 100);
-
 	bool hosting = false;
 	// if(connect_name[0] == 0){
 	// 	snprintf(connect_name, 100, "127.0.0.1");
 	// 	hosting = true;
 	// }
 	// std::cout<<"-> "<<connect_name<<std::endl;
-
 	// std::cout<<"Port [empty=30000]: ";
 	// char templine[100];
 	// std::cin.getline(templine, 100);
@@ -223,7 +206,6 @@ int main() {
 	// 	port = 30000;
 	// else
 	// 	port = atoi(templine);
-
 	std::cout << "Address to connect to [empty = host a game]: ";
 	snprintf(connect_name, 100, "127.0.0.1");
 	std::cout << "-> " << connect_name << std::endl;
@@ -232,33 +214,25 @@ int main() {
 	/*
 	 Resolution selection
 	 */
-
 	u16 screenW = 800;
 	u16 screenH = 600;
 	video::E_DRIVER_TYPE driverType;
-
 #ifdef _WIN32
 	//driverType = video::EDT_DIRECT3D9; // Doesn't seem to work
 	driverType = video::EDT_OPENGL;
 #else
 	driverType = video::EDT_OPENGL;
 #endif
-
 	IrrlichtDevice *device;
 	device = createDevice(driverType, core::dimension2d<u32>(screenW, screenH),
 			16, false, false, false, &receiver);
-
 	if (device == 0)
 		return 1; // could not create selected driver.
-
 	/*
 	 Continue initialization
 	 */
-
 	video::IVideoDriver* driver = device->getVideoDriver();
-
 	scene::ISceneManager* smgr = device->getSceneManager();
-
 	gui::IGUIEnvironment* guienv = device->getGUIEnvironment();
 
 	// -----Pause menu-----
@@ -269,7 +243,6 @@ int main() {
 			core::position2d<int>(screenW / 2 - imgWidth / 2,
 					screenH / 2 - imgHeight / 2));
 	pauseOverlay->setVisible(false);
-
 	gui::IGUISkin* skin = guienv->getSkin();
 	gui::IGUIFont* font = guienv->getFont("../data/fontlucida.png");
 	if (font)
@@ -277,7 +250,6 @@ int main() {
 	skin->setColor(gui::EGDC_BUTTON_TEXT, video::SColor(255, 255, 255, 255));
 	skin->setColor(gui::EGDC_3D_HIGH_LIGHT, video::SColor(255, 0, 0, 0));
 	skin->setColor(gui::EGDC_3D_SHADOW, video::SColor(255, 0, 0, 0));
-
 	const wchar_t *text = L"Loading...";
 	core::vector2d<s32> center(screenW / 2, screenH / 2);
 	core::dimension2d<u32> textd = font->getDimension(text);
@@ -286,20 +258,16 @@ int main() {
 	//core::vector2d<s32> textsize(textd.Width+4, textd.Height);
 	core::vector2d<s32> textsize(300, textd.Height);
 	core::rect<s32> textrect(center - textsize / 2, center + textsize / 2);
-
 	gui::IGUIStaticText *gui_loadingtext = guienv->addStaticText(text, textrect,
 			false, false);
 	gui_loadingtext->setTextAlignment(gui::EGUIA_CENTER, gui::EGUIA_UPPERLEFT);
-
 	driver->beginScene(true, true, video::SColor(255, 255, 255, 255));
 	guienv->drawAll();
 	driver->endScene();
-
 	video::SMaterial materials[MATERIALS_COUNT];
 	for (u16 i = 0; i < MATERIALS_COUNT; i++) {
 		materials[i].Lighting = false;
 		materials[i].BackfaceCulling = false;
-
 		const char *filename = g_material_filenames[i];
 		if (filename != NULL) {
 			video::ITexture *t = driver->getTexture(filename);
@@ -314,13 +282,10 @@ int main() {
 		materials[i].setFlag(video::EMF_BILINEAR_FILTER, false);
 		//materials[i].setFlag(video::EMF_ANISOTROPIC_FILTER, false);
 	}
-
 	// Make a scope here for the client so that it gets removed
 	// before the irrlicht device
 	{
-
 		std::cout << "Creating server and client" << std::endl;
-
 		Server *server = NULL;
 		if (hosting) {
 			//server inits m_env, m_env inits MasterMap
@@ -328,7 +293,6 @@ int main() {
 			server = new Server();
 			server->start(port);
 		}
-
 		Client client(smgr, materials); //this will create local player
 		Address connect_address(0, 0, 0, 0, port);
 		try {
@@ -338,14 +302,6 @@ int main() {
 			return 0;
 		}
 		client.connect(connect_address);
-		// -----Test load map-----
-//		u32 timestart = device->getTimer()->getTime();
-//		server->loadMap();
-		client.loadMap();
-//		u32 timeLoaded = device->getTimer()->getTime();
-//		std::cout << "----------Time used: " << timeLoaded - timestart
-//				<< std::endl;
-//		device->getTimer()->stop();
 		player = client.getLocalPlayer();
 		player->animateStand();
 		// Create the camera node
@@ -803,27 +759,20 @@ int main() {
 					device->setWindowCaption(str.c_str());
 					lastFPS = fps;
 				}
-
 				/*}
 				 else
 				 device->yield();*/
 			} // if (receiver.isPaused) {} else
-
 		}
-
 		// ----Save the map at exit-----
-//		client.saveMap();
-//		server->saveMap();
+		client.saveMap();
 		if (server != NULL)
 			delete server;
-
 	} // client is deleted at this point
-
 	/*
 	 In the end, delete the Irrlicht device.
 	 */
 	device->drop();
-
 	return 0;
 }
 
