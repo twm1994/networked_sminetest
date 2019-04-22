@@ -96,8 +96,13 @@ public:
 	// Return value is valid until step()
 	core::list<Player*> getPlayers();
 	core::list<Npc*> getNpcs();
-	// -----For loading map-----
-	void loadMap();
+	// -----For saving map-----
+	void saveMap();
+
+//	bool isLoading() {
+//		return m_env.getMap().isLoading();
+//	}
+
 private:
 	void ReceiveAll();
 	void Receive();
