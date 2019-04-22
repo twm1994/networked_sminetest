@@ -207,6 +207,17 @@ public:
 			throw InvalidPositionException();
 		v3s16 relpos = p - blockpos * MAP_BLOCKSIZE;
 		blockref->setNode(relpos, n);
+		// -----For saving created nodes at exit-----
+		if (n.d < MATERIAL_AIR)
+			m_nodes.insert(p, s16(n.d));
+		else {
+			// Don't save air node
+			core::map<v3s16, s16>::Node *n = m_nodes.find(p);
+			if (n != NULL) {
+//				m_nodes.delink(p);
+				m_nodes.remove(n);
+			}
+		}
 	}
 
 	void setNode(s16 x, s16 y, s16 z, MapNode & n) {

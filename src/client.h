@@ -108,8 +108,8 @@ private:
 	void Receive();
 	// m_con_mutex must be locked when calling these
 	void sendPlayerPos(float dtime);
-	// -----Container for MapNode excluding air node-----
-	core::map<v3s16, s16> m_nodes;
+//	// -----Container for MapNode excluding air node-----
+//	core::map<v3s16, s16> m_nodes;
 	ClientUpdateThread m_thread;
 	Environment m_env;
 	JMutex m_env_mutex;
