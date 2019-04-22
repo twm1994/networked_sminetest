@@ -1,15 +1,7 @@
-/*
- (c) 2010 Perttu Ahola <celeron55@gmail.com>
- */
-
 #include "map.h"
-//#include "player.h"
 #include "main.h"
 #include <jmutexautolock.h>
-namespace jthread {
-} // JThread 1.2 support
 using namespace jthread;
-// JThread 1.3 support
 #include "client.h"
 
 #ifdef _WIN32
@@ -19,24 +11,6 @@ using namespace jthread;
 #include <unistd.h>
 #define sleep_ms(x) usleep(x*1000)
 #endif
-
-/*
- void limitBox(core::aabbox3d<s16> & box, core::aabbox3d<s16> & limits)
- {
- if(box.MinEdge.X < limits.MinEdge.X)
- box.MinEdge.X = limits.MinEdge.X;
- if(box.MaxEdge.X > limits.MaxEdge.X)
- box.MaxEdge.X = limits.MaxEdge.X;
- if(box.MinEdge.Y < limits.MinEdge.Y)
- box.MinEdge.Y = limits.MinEdge.Y;
- if(box.MaxEdge.Y > limits.MaxEdge.Y)
- box.MaxEdge.Y = limits.MaxEdge.Y;
- if(box.MinEdge.Z < limits.MinEdge.Z)
- box.MinEdge.Z = limits.MinEdge.Z;
- if(box.MaxEdge.Z > limits.MaxEdge.Z)
- box.MaxEdge.Z = limits.MaxEdge.Z;
- }
- */
 
 void * MapUpdateThread::Thread() {
 	if (map == NULL)
@@ -931,6 +905,198 @@ bool Map::updateChangedVisibleArea() {
 	std::cout << std::endl;
 	//status.setReady(true);
 	return true;
+}
+
+void Map::setSectors() {
+	time_t t0 = time(nullptr);
+	std::cout << "Loading map" << std::endl;
+	dout_map << "Loading map" << std::endl;
+	for (s16 z = -MAP_WIDTH; z < MAP_WIDTH; z++) {
+		for (s16 x = -MAP_LENGTH; x < MAP_LENGTH; x++) {
+			MapSector* mapSector = new MapSector(this, v2s16(x, z));
+			for (s16 y = MAP_BOTTOM; y < MAP_HEIGHT; y++) {
+				bool atBottom;
+				if (y == MAP_BOTTOM)
+					atBottom = true;
+				else
+					atBottom = false;
+				MapBlock* mapBlock = setBlockNodes(atBottom, v3s16(x, y, z));
+				mapSector->insertBlock(mapBlock);
+			}
+//			mapSector->insertBlock(
+//					getIgnoreNodesTop(v3s16(x, MAP_BOTTOM - 1, z)));
+			m_sectors.insert(v2s16(x, z), mapSector);
+		}
+	}
+	time_t t1 = time(nullptr);
+	std::cout << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
+	dout_map << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
+	dout_map.flush();
+}
+
+// pos is block postion
+MapBlock *Map::setBlockNodes(bool atBottom, v3s16 pos) {
+	MapBlock* mapBlock = new MapBlock(this, pos);
+	s16 minX = pos.X * MAP_BLOCKSIZE;
+	s16 minY = pos.Y * MAP_BLOCKSIZE;
+	s16 minZ = pos.Z * MAP_BLOCKSIZE;
+	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
+		for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
+			for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
+				v3s16 nodepos = v3s16(minX + x, minY + y, minZ + z);
+				MapNode node;
+				node.param = 0;
+				if (atBottom && y == 0) {
+					// Base layer of the map is grass
+					node.d = MATERIAL_GRASS;
+					m_nodes.insert(nodepos, s16(node.d));
+				} else {
+					node.d = MATERIAL_AIR;
+				}
+				mapBlock->setNode(x, y, z, node);
+			} // for(int x=0;x<MAP_BLOCKSIZE;x++
+		} // for(int y=0;y<MAP_BLOCKSIZE;y++)
+	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
+	return mapBlock;
+}
+
+void Map::addBoundary() {
+	time_t t0 = time(nullptr);
+	std::cout << "Generating boundary" << std::endl;
+	dout_map << "Generating boundary" << std::endl;
+	// alone z-axis: x at -MAP_LENGTH-1 and MAP_LENGTH
+	// rightmost row of nodes in the block
+	addIgnoreNodesZ(-MAP_LENGTH - 1, MAP_BLOCKSIZE - 1);
+	// leftmost row of nodes in the block
+	addIgnoreNodesZ(MAP_LENGTH, 0);
+	// alone x-axis: z at -MAP_WIDTH-1 and MAP_WIDTH
+	// rightmost row of nodes in the block
+	addIgnoreNodesX(-MAP_WIDTH - 1, MAP_BLOCKSIZE - 1);
+	// leftmost row of nodes in the block
+	addIgnoreNodesX(MAP_WIDTH, 0);
+	time_t t1 = time(nullptr);
+	std::cout << "Generated boundary in " << difftime(t1, t0) << "ms"
+			<< std::endl;
+	dout_map << "Generated boundary in " << difftime(t1, t0) << "ms"
+			<< std::endl;
+	dout_map.flush();
+}
+
+void Map::addIgnoreNodesZ(s16 blockX, s16 x) {
+	for (s16 blockZ = -MAP_WIDTH; blockZ < MAP_WIDTH; blockZ++) {
+		MapSector* mapSector = new MapSector(this, v2s16(blockX, blockZ));
+		for (s16 blockY = 0; blockY < MAP_HEIGHT; blockY++) {
+			MapBlock* mapBlock = new MapBlock(this,
+					v3s16(blockX, blockY, blockZ));
+			for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
+				for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
+					MapNode node;
+					node.d = MATERIAL_IGNORE;
+					mapBlock->setNode(x, y, z, node);
+				} // for(int y=0;y<MAP_BLOCKSIZE;y++)
+			} // for(int z=0;z<MAP_BLOCKSIZE;z++)
+			mapSector->insertBlock(mapBlock);
+		}
+		m_sectors.insert(v2s16(blockX, blockZ), mapSector);
+	}
+}
+void Map::addIgnoreNodesX(s16 blockZ, s16 z) {
+	for (s16 blockX = -MAP_LENGTH; blockX < MAP_LENGTH; blockX++) {
+		MapSector* mapSector = new MapSector(this, v2s16(blockX, blockZ));
+		for (s16 blockY = 0; blockY < MAP_HEIGHT; blockY++) {
+			MapBlock* mapBlock = new MapBlock(this,
+					v3s16(blockX, blockY, blockZ));
+			for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
+				for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
+					MapNode node;
+					node.d = MATERIAL_IGNORE;
+					mapBlock->setNode(x, y, z, node);
+				} // for(int y=0;y<MAP_BLOCKSIZE;y++)
+			} // for(int z=0;z<MAP_BLOCKSIZE;z++)
+			mapSector->insertBlock(mapBlock);
+		}
+		m_sectors.insert(v2s16(blockX, blockZ), mapSector);
+	}
+}
+
+void Map::save() {
+	dout_map << "Size of m_nodes:" << m_nodes.size() << std::endl;
+	std::cout << "Size of m_nodes:" << m_nodes.size() << std::endl;
+	if (m_nodes.size() > 0) {
+		Json::StreamWriterBuilder builder;
+		builder.settings_["indentation"] = ""; // Write in one line
+		std::unique_ptr<Json::StreamWriter> writer(builder.newStreamWriter());
+		Json::Value map;
+		core::map<v3s16, s16>::Iterator i;
+		i = m_nodes.getIterator();
+		time_t t0 = time(nullptr);
+		s16 node_count = 0;
+		for (; i.atEnd() == false; i++) {
+			v3s16 p = i.getNode()->getKey();
+			s16 v = i.getNode()->getValue();
+			// -----air node and base level nodes will not be saved-----
+			if (p.X >= (-MAP_LENGTH * MAP_BLOCKSIZE)
+					&& p.X < (MAP_LENGTH * MAP_BLOCKSIZE)
+					&& p.Y > -MAP_BOTTOM * MAP_BLOCKSIZE
+					&& p.Y < MAP_HEIGHT * MAP_BLOCKSIZE
+					&& p.Z >= (-MAP_WIDTH * MAP_BLOCKSIZE)
+					&& p.Z < (MAP_WIDTH * MAP_BLOCKSIZE)) {
+				Json::Value node;
+				Json::Value pos;
+				pos[0] = p.X;
+				pos[1] = p.Y;
+				pos[2] = p.Z;
+				node["0"] = pos;
+				node["1"] = v;
+				map.append(node);
+				node_count++;
+			}
+		}
+		dout_map << "# nodes saved: " << node_count << std::endl;
+		std::cout << "# nodes saved: " << node_count << std::endl;
+		std::ofstream ofs("created_nodes.json");
+		writer->write(map, &ofs);
+		time_t t1 = time(nullptr);
+		dout_map << "Saved map in " << difftime(t1, t0) << "ms" << std::endl;
+		std::cout << "Saved map in " << difftime(t1, t0) << "ms" << std::endl;
+		dout_map.flush();
+	} else {
+		dout_map << "No node to save" << std::endl;
+		std::cout << "No node to save" << std::endl;
+		dout_map.flush();
+	}
+
+}
+
+void Map::addCreatedNodes() {
+	std::ifstream ifs("created_nodes.json");
+	if (ifs) {
+		Json::CharReaderBuilder reader;
+		Json::Value map;
+		JSONCPP_STRING errs;
+		Json::parseFromStream(reader, ifs, &map, &errs);
+		dout_map << "Loading nodes from file" << std::endl;
+		std::cout << "Loading nodes from file" << std::endl;
+		time_t t0 = time(nullptr);
+		for (Json::Value::const_iterator i = map.begin(); i != map.end(); i++) {
+			Json::Value pos = (*i)["0"];
+			v3s16 nodePos = v3s16(pos[0].asInt(), pos[1].asInt(),
+					pos[2].asInt());
+			s16 d = (*i)["1"].asInt();
+			m_nodes.insert(nodePos, d);
+			MapNode n;
+			n.d = d;
+			setNode(nodePos, n);
+		}
+		time_t t1 = time(nullptr);
+		dout_map << "Loaded nodes in " << difftime(t1, t0) << "ms" << std::endl;
+		dout_map.flush();
+		std::cout << "Loaded nodes in " << difftime(t1, t0) << "ms"
+				<< std::endl;
+	} else {
+		std::cout << "File does not exist" << std::endl;
+	}
+
 }
 
 ClientMap::ClientMap(Client *client, video::SMaterial *materials,

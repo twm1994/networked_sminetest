@@ -7,10 +7,7 @@
 
 #include <jmutex.h>
 #include <jthread.h>
-namespace jthread {
-} // JThread 1.2 support
 using namespace jthread;
-// JThread 1.3 support
 #include <iostream>
 #include <malloc.h>
 
@@ -28,7 +25,16 @@ using namespace jthread;
 #include "mapblock.h"
 #include "mapsector.h"
 #include <ctime>
-#define MAP_SIZE 4 // # of MapSectors
+// In blocks
+// For testing
+//#define MAP_LENGTH 1
+//#define MAP_WIDTH 1
+//#define MAP_HEIGHT 4
+#define MAP_LENGTH 16
+#define MAP_WIDTH 16
+#define MAP_HEIGHT 4
+// Lowest level of map
+#define MAP_BOTTOM 0
 /*
 
  TODO: Automatically unload blocks from memory and save on disk
