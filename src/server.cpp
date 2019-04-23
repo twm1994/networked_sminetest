@@ -24,7 +24,6 @@ void * ServerNetworkThread::Thread() {
 		m_server->AsyncRunStep();
 
 		try {
-			//dout_server<<"Running m_server->Receive()"<<std::endl;
 			m_server->Receive();
 		} catch (con::NoIncomingDataException &e) {
 		} catch (std::exception &e) {
@@ -76,7 +75,6 @@ void Server::step(float dtime) {
 }
 
 void Server::AsyncRunStep() {
-	//std::cout << "----------Server::AsyncRunStep()----------" << std::endl;
 	float dtime;
 	{
 		JMutexAutoLock lock1(m_step_dtime_mutex);
@@ -134,6 +132,10 @@ void Server::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 			p.Z = readS16(&data[6]);
 			MapNode n;
 			n.d = MATERIAL_AIR;
+			// #####This worked but the following message still show#####
+			// #####ServerNetworkThread: Some exception: Somebody tried to get/set something in a nonexistent position.#####
+			v3s16 blockPos = m_env.getMap().getNodeBlockPos(p);
+			m_env.getMap().getBlock(blockPos);
 			m_env.getMap().setNode(p, n);
 			u32 replysize = 8;
 			SharedBuffer<u8> reply(replysize);
@@ -152,6 +154,10 @@ void Server::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 			p.Z = readS16(&data[6]);
 			MapNode n;
 			n.deSerialize(&data[8]);
+			// #####This worked but the following message still show#####
+			// #####ServerNetworkThread: Some exception: Somebody tried to get/set something in a nonexistent position.#####
+			v3s16 blockPos = m_env.getMap().getNodeBlockPos(p);
+			m_env.getMap().getBlock(blockPos);
 			m_env.getMap().setNode(p, n);
 			u32 replysize = 8 + MapNode::serializedLength();
 			//u8 reply[replysize];
@@ -177,17 +183,19 @@ void Server::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 			}
 			player->timeout_counter = 0.0;
 			v3s32 ps = readV3S32(&data[2]);
+			// #####Client does not fetch block from server as in Minetest NMPR#####
+			// #####Client map change is not triggered by server map change anymore#####
+			// #####It is the other way around#####
+			// #####Call getBlock here to create the block on server map if it is not created yet#####
+			v3s16 pos = v3s16((s16) ps.X / 100, (s16) ps.Y / 100,
+					(s16) ps.Z / 100);
+			m_env.getMap().getBlock(pos);
 			v3s32 ss = readV3S32(&data[2 + 12]);
 			v3f position((f32) ps.X / 100., (f32) ps.Y / 100.,
 					(f32) ps.Z / 100.);
 			v3f speed((f32) ss.X / 100., (f32) ss.Y / 100., (f32) ss.Z / 100.);
 			player->setPosition(position);
 			player->speed = speed;
-			/*dout_server<<"Server::ProcessData(): Moved player "<<peer_id
-			 <<" to ("<<position.X
-			 <<","<<position.Y
-			 <<","<<position.Z
-			 <<")"<<std::endl;*/
 		} else {
 			dout_server << "WARNING: Server::ProcessData(): Ingoring "
 					"unknown command " << command << std::endl;
@@ -206,35 +214,26 @@ void Server::SendPlayerPositions(float dtime) {
 	if (counter < 0.2)
 		return;
 	counter = 0.0;
-
 	JMutexAutoLock envlock(m_env_mutex);
-
 	core::list<Player*> players = m_env.getPlayers();
-
 	u32 player_count = players.getSize();
 	u32 datasize = 2 + (2 + 12 + 12) * player_count;
-
 	SharedBuffer<u8> data(datasize);
 	writeU16(&data[0], TOCLIENT_PLAYERPOS);
-
 	u32 start = 2;
 	core::list<Player*>::Iterator i;
 	for (i = players.begin(); i != players.end(); i++) {
 		Player *player = *i;
-
 		v3f pf = player->getPosition();
 		v3s32 position(pf.X * 100, pf.Y * 100, pf.Z * 100);
 		v3f sf = player->speed;
 		v3s32 speed(sf.X * 100, sf.Y * 100, sf.Z * 100);
-
 		writeU16(&data[start], player->peer_id);
 		writeV3S32(&data[start + 2], position);
 		writeV3S32(&data[start + 2 + 12], speed);
 		start += 2 + 12 + 12;
 	}
-
 	JMutexAutoLock conlock(m_con_mutex);
-
 	// Send as unreliable
 	m_con.SendToAll(0, data, false);
 }

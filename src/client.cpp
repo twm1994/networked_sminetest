@@ -175,17 +175,15 @@ void Client::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 		p.Z = readS16(&data[6]);
 		dout_client << "Client::ProcessData() remove node at (" << p.X << ","
 				<< p.Y << "," << p.Z << ")" << std::endl;
-		dout_client.flush();
 		std::cout << "Client::ProcessData() remove node at (" << p.X << ","
 				<< p.Y << "," << p.Z << ")" << std::endl;
 		{
 			JMutexAutoLock envlock(m_env_mutex);
 			m_env.getMap().removeNodeAndUpdate(p);
 		}
-		dout_client << "Client::ProcessData() Node removed at (" << p.X << ","
+		dout_client << "Client::ProcessData() node removed at (" << p.X << ","
 				<< p.Y << "," << p.Z << ")" << std::endl;
-		dout_client.flush();
-		std::cout << "Client::ProcessData() Node removed  at (" << p.X << ","
+		std::cout << "Client::ProcessData() node removed  at (" << p.X << ","
 				<< p.Y << "," << p.Z << ")" << std::endl;
 	} else if (command == TOCLIENT_ADDNODE) {
 		if (datasize < 8 + MapNode::serializedLength())
@@ -201,7 +199,6 @@ void Client::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 					<< p.Y << "," << p.Z << "), type:" << s16(n.d) << std::endl;
 			std::cout << "Client::ProcessData() add node at (" << p.X << ","
 					<< p.Y << "," << p.Z << "), type:" << s16(n.d) << std::endl;
-			dout_client.flush();
 			JMutexAutoLock envlock(m_env_mutex);
 			f32 light = m_env.getMap().getNode(p).light;
 			dout_client << "Client::ProcessData() set node at (" << p.X << ","
@@ -214,9 +211,8 @@ void Client::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 			m_env.getMap().nodeAddedUpdate(p, light);
 			dout_client << "Client::ProcessData() node added at (" << p.X << ","
 					<< p.Y << "," << p.Z << "), type:" << s16(n.d) << std::endl;
-			dout_client.flush();
-			std::cout << "Client::ProcessData() Node added  at (" << p.X << ","
-					<< p.Y << "," << p.Z << "), type:" << n.d << std::endl;
+			std::cout << "Client::ProcessData() node added  at (" << p.X << ","
+					<< p.Y << "," << p.Z << "), type:" << s16(n.d) << std::endl;
 		}
 	} else if (command == TOCLIENT_PLAYERPOS) {
 		u16 our_peer_id;
@@ -241,17 +237,9 @@ void Client::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 
 				// Don't update the position of the local player
 				if (peer_id == our_peer_id) {
-					/*dout_client<<"Client: TOCLIENT_PLAYERPOS: "
-					 "player peer_id="<<peer_id;
-					 dout_client<<" is ours"<<std::endl;
-					 dout_client<<std::endl;*/
-
 					start += (2 + 12 + 12);
 					continue;
 				} else {
-					/*dout_client<<"Client: TOCLIENT_PLAYERPOS: "
-					 "player peer_id="<<peer_id;
-					 dout_client<<std::endl;*/
 				}
 
 				Player *player = m_env.getPlayer(peer_id);
@@ -351,9 +339,6 @@ bool Client::AsyncProcessData() {
 //				} // for(int x=0;x<MAP_BLOCKSIZE;x++
 //			} // for(int y=0;y<MAP_BLOCKSIZE;y++)
 //		} // for(int z=0;z<MAP_BLOCKSIZE;z++)
-
-//		dout_client << "Client: Thread: BLOCKDATA for (" << p.X << "," << p.Y
-//				<< "," << p.Z << ")" << std::endl;
 		{ //envlock
 			JMutexAutoLock envlock(m_env_mutex);
 
@@ -448,7 +433,6 @@ void Client::removeNode(v3s16 nodepos) {
 		// -----Add to m_remove_cache to handle removeNode event-----
 		dout_client << "Client::removeNode() at: (" << nodepos.X << ","
 				<< nodepos.Y << "," << nodepos.Z << ")" << std::endl;
-		dout_client.flush();
 		std::cout << "Client::removeNode() at: (" << nodepos.X << ","
 				<< nodepos.Y << "," << nodepos.Z << ")" << std::endl;
 		SharedBuffer<u8> data(8);
@@ -462,7 +446,6 @@ void Client::removeNode(v3s16 nodepos) {
 				<< "Client::removeNode() ignored boundary/base level node at: ("
 				<< nodepos.X << "," << nodepos.Y << "," << nodepos.Z << ")"
 				<< std::endl;
-		dout_client.flush();
 		std::cout
 				<< "Client::removeNode() ignored boundary/base level node at: ("
 				<< nodepos.X << "," << nodepos.Y << "," << nodepos.Z << ")"
@@ -506,7 +489,6 @@ void Client::addNode(v3s16 nodepos, MapNode n) {
 				<< "Client::addNode() ignored boundary/base level node at: ("
 				<< nodepos.X << "," << nodepos.Y << "," << nodepos.Z << ")"
 				<< std::endl;
-		dout_client.flush();
 		std::cout << "Client::addNode() ignored boundary/base level node at: ("
 				<< nodepos.X << "," << nodepos.Y << "," << nodepos.Z << ")"
 				<< std::endl;

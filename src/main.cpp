@@ -54,10 +54,11 @@ u16 g_selected_material = 0;
  */
 
 std::ofstream dfile("debug.txt");
+std::ofstream dfilemap("map_debug.txt");
 std::ostream dout_con(dfile.rdbuf());
 std::ostream dout_server(dfile.rdbuf());
 std::ostream dout_client(dfile.rdbuf());
-std::ostream dout_map(dfile.rdbuf());
+std::ostream dout_map(dfilemap.rdbuf());
 Player *player;
 class MyEventReceiver: public IEventReceiver {
 public:

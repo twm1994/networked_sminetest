@@ -192,8 +192,9 @@ public:
 	MapNode getNode(v3s16 p) {
 		v3s16 blockpos = getNodeBlockPos(p);
 		MapBlock * blockref = getBlockNoCreate(blockpos);
-		if (blockref == NULL)
+		if (blockref == NULL) {
 			throw InvalidPositionException();
+		}
 		v3s16 relpos = p - blockpos * MAP_BLOCKSIZE;
 
 		return blockref->getNode(relpos);
@@ -207,10 +208,13 @@ public:
 		v3s16 blockpos = getNodeBlockPos(p);
 		MapBlock * blockref = getBlockNoCreate(blockpos);
 		if (blockref == NULL) {
-
-		}
+			std::cout << "*******************Block does not exist at: ("
+					<< blockpos.X << "," << blockpos.Y << "," << blockpos.Z
+					<< ")********************" << std::endl;
 			throw InvalidPositionException();
+		}
 		v3s16 relpos = p - blockpos * MAP_BLOCKSIZE;
+		// #####Maybe something wrong with this#####
 		blockref->setNode(relpos, n);
 		// -----For saving created nodes at exit-----
 		if (n.d < MATERIAL_AIR)

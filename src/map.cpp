@@ -799,6 +799,7 @@ bool Map::updateChangedVisibleArea() {
 				// -----Ignore invalid positions to avoid going out of map-----
 				try {
 					// -----should point to getBlock----
+					// #####maybe set changed flag#####
 					MapBlock * block = getBlock(v3s16(x, y, z));
 					if (block->getChangedFlag()) {
 						if (blocks_changed.empty() == true) {
@@ -847,94 +848,6 @@ bool Map::updateChangedVisibleArea() {
 	//status.setReady(true);
 	return true;
 }
-
-//void Map::setSectors() {
-//	time_t t0 = time(nullptr);
-//	std::cout << "Loading map" << std::endl;
-//	dout_map << "Loading map" << std::endl;
-//	for (s16 z = 0; z < MAP_WIDTH; z++) {
-//		for (s16 x = 0; x < MAP_LENGTH; x++) {
-//			std::cout << "New MapSector at " << "(" << x << "," << z << ")"
-//					<< std::endl;
-//			dout_map << "New MapSector at " << "(" << x << "," << z << ")"
-//					<< std::endl;
-//			MapSector* mapSector = new MapSector(this, v2s16(x, z));
-//			for (s16 y = MAP_BOTTOM; y < MAP_HEIGHT; y++) {
-//				bool atBottom;
-//				if (y == MAP_BOTTOM)
-//					atBottom = true;
-//				else
-//					atBottom = false;
-//				MapBlock* mapBlock = setBlockNodes(atBottom, v3s16(x, y, z));
-//				mapSector->insertBlock(mapBlock);
-//			}
-//			m_sectors.insert(v2s16(x, z), mapSector);
-//		}
-//	}
-//	time_t t1 = time(nullptr);
-//	std::cout << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
-//	dout_map << "Loaded map in " << difftime(t1, t0) << "ms" << std::endl;
-//	dout_map.flush();
-//}
-
-// pos is block postion
-//MapBlock *Map::setBaseLevel(v2s16 pos) {
-//	s16 minX = pos.X * MAP_BLOCKSIZE;
-//	s16 y = MAP_BOTTOM * MAP_BLOCKSIZE;
-//	s16 minZ = pos.Y * MAP_BLOCKSIZE;
-//	MapBlock* mapBlock = new MapBlock(this, v3s16(pos.X, y, pos.Y));
-////	std::cout << "#####Set base level at sector: " << "(" << pos.X << ","
-////			<< pos.Y << ") " << std::endl;
-////	dout_map << "#####Set base level at sector: " << "(" << pos.X << ","
-////			<< pos.Y << ") " << std::endl;
-//	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
-//		for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
-//			v3s16 nodepos = v3s16(minX + x, y, minZ + z);
-//			MapNode node;
-//			node.param = 0;
-//			node.d = MATERIAL_GRASS;
-//			m_nodes.insert(nodepos, s16(node.d));
-//			mapBlock->setNode(x, y, z, node);
-//		} // for(int x=0;x<MAP_BLOCKSIZE;x++)
-//	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
-////	std::cout << "#####Set base level done " << std::endl;
-////	dout_map << "#####Set base level done " << std::endl;
-//	return mapBlock;
-//}
-
-// pos is block postion
-//MapBlock *Map::setBlockNodes(bool atBottom, v3s16 pos) {
-//	MapBlock* mapBlock = new MapBlock(this, pos);
-//	s16 minX = pos.X * MAP_BLOCKSIZE;
-//	s16 minY = pos.Y * MAP_BLOCKSIZE;
-//	s16 minZ = pos.Z * MAP_BLOCKSIZE;
-//	for (s16 z = 0; z < MAP_BLOCKSIZE; z++) {
-//		for (s16 y = 0; y < MAP_BLOCKSIZE; y++) {
-//			for (s16 x = 0; x < MAP_BLOCKSIZE; x++) {
-//				v3s16 nodepos = v3s16(minX + x, minY + y, minZ + z);
-//				MapNode node;
-//				node.param = 0;
-//				if (atBottom && y == 0) {
-//					// Base layer of the map is grass
-//					node.d = MATERIAL_GRASS;
-//					m_nodes.insert(nodepos, s16(node.d));
-//				} else {
-//					node.d = MATERIAL_AIR;
-//				}
-////				std::cout << "#####New MapNode at " << "(" << nodepos.X << ","
-////						<< nodepos.Y << "," << nodepos.Z << "), type"
-////						<< int(node.d) << std::endl;
-////				dout_map << "#####New MapNode at " << "(" << nodepos.X << ","
-////						<< nodepos.Y << "," << nodepos.Z << "), type"
-////						<< int(node.d) << std::endl;
-////				mapBlock->setNode(x, y, z, node);
-////				std::cout << "#####New MapNode done " << std::endl;
-////				dout_map << "#####New MapNode done " << std::endl;
-//			} // for(int x=0;x<MAP_BLOCKSIZE;x++
-//		} // for(int y=0;y<MAP_BLOCKSIZE;y++)
-//	} // for(int z=0;z<MAP_BLOCKSIZE;z++)
-//	return mapBlock;
-//}
 
 void Map::addBoundary() {
 	time_t t0 = time(nullptr);
@@ -1139,7 +1052,8 @@ MapSector* Map::fillSector(v2s16 pos) {
 		}
 		m_sectors.insert(v2s16(pos.X, pos.Y), mapSector);
 		time_t t1 = time(nullptr);
-		std::cout << "Loaded sector at (" << "pos.X" << "," << pos.Y << ") in "
+		std::cout << "#####Map::fillSector(v2s16 pos) loaded sector at ("
+				<< pos.X << "," << pos.Y << ") in "
 				<< difftime(t1, t0) << "ms" << std::endl;
 		return mapSector;
 	}
