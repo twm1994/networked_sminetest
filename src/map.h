@@ -30,7 +30,7 @@ using namespace jthread;
 //#define MAP_LENGTH 1
 //#define MAP_WIDTH 1
 //#define MAP_HEIGHT 4
-#define MAP_LENGTH 32
+#define MAP_LENGTH 35
 #define MAP_WIDTH 32
 #define MAP_HEIGHT 4
 // Lowest level of map
@@ -214,7 +214,6 @@ public:
 			throw InvalidPositionException();
 		}
 		v3s16 relpos = p - blockpos * MAP_BLOCKSIZE;
-		// #####Maybe something wrong with this#####
 		blockref->setNode(relpos, n);
 		// -----For saving created nodes at exit-----
 		if (n.d < MATERIAL_AIR)
@@ -281,13 +280,9 @@ public:
 	bool updateChangedVisibleArea();
 	void renderMap(video::IVideoDriver* driver, video::SMaterial *materials);
 	// -----Initialize m_map----
-//	void setSectors();
-//	MapBlock * setBlockNodes(bool atBottom, v3s16 pos);
-//	MapBlock *setBaseLevel(v2s16 pos);
 	void addBoundary();
 	void addIgnoreNodesZ(s16 blockX, s16 x);
 	void addIgnoreNodesX(s16 blockZ, s16 z);
-//	MapBlock* getIgnoreNodesTop(v3s16 pos);
 	void save(const char* fname);
 	// -----Check if is loading created nodes in MapUpdateThread-----
 	bool isLoading() {
@@ -298,8 +293,6 @@ public:
 		is_loading = s;
 	}
 
-//	void addCreatedNodes(const char* fname);
-
 	void load(const char* fname) {
 		setLoading(true);
 		// -----Generate map in background at start up-----
@@ -309,6 +302,7 @@ public:
 		loadCreatedNodes(fname);
 		setLoading(false);
 	}
+
 	void loadCreatedNodes(const char* fname);
 	MapBlock *fillBlockNodes(v3s16 pos);
 	MapSector* fillSector(v2s16 pos);

@@ -38,19 +38,15 @@ Client::Client(scene::ISceneManager* smgr, video::SMaterial *materials) :
 				new ClientMap(this, materials, smgr->getRootSceneNode(), smgr,
 						666), dout_client), m_con(PROTOCOL_ID, 512), m_smgr(
 				smgr) {
-	std::cout << "Client::Client() generating map" << std::endl;
-	m_env.getMap().load(CLIENT_MAP_FILE);
 	//	m_fetchblock_mutex.Init();
 	m_incoming_queue_mutex.Init();
 	m_env_mutex.Init();
 	m_con_mutex.Init();
-
 	m_thread.Start();
-
 	{
 		JMutexAutoLock envlock(m_env_mutex);
+		m_env.getMap().load(CLIENT_MAP_FILE);
 		m_env.getMap().StartUpdater();
-
 		Player *player = new Player(true, smgr->getRootSceneNode(), smgr, 0);
 		//f32 y = BS*2 + m_env.getMap().getGroundHeight(v2s16(0,0));
 		f32 y = BS * 2;

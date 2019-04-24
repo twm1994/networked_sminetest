@@ -6,8 +6,6 @@
 #include "main.h"
 #include <jmutexautolock.h>
 using namespace jthread;
-// JThread 1.3 support
-#include "main.h"
 
 #ifdef _WIN32
 #include <windows.h>

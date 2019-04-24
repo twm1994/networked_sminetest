@@ -955,36 +955,6 @@ void Map::save(const char* fname) {
 
 }
 
-//void Map::addCreatedNodes(const char* fname) {
-//	std::ifstream ifs(fname);
-//	if (ifs) {
-//		Json::CharReaderBuilder reader;
-//		Json::Value map;
-//		JSONCPP_STRING errs;
-//		Json::parseFromStream(reader, ifs, &map, &errs);
-//		dout_map << "Loading nodes from file" << std::endl;
-//		std::cout << "Loading nodes from file" << std::endl;
-//		time_t t0 = time(nullptr);
-//		for (Json::Value::const_iterator i = map.begin(); i != map.end(); i++) {
-//			Json::Value pos = (*i)["0"];
-//			v3s16 nodePos = v3s16(pos[0].asInt(), pos[1].asInt(),
-//					pos[2].asInt());
-//			s16 d = (*i)["1"].asInt();
-//			m_nodes.insert(nodePos, d);
-//			MapNode n;
-//			n.d = d;
-//			setNode(nodePos, n);
-//		}
-//		time_t t1 = time(nullptr);
-//		dout_map << "Loaded nodes in " << difftime(t1, t0) << "ms" << std::endl;
-//		dout_map.flush();
-//		std::cout << "Loaded nodes in " << difftime(t1, t0) << "ms"
-//				<< std::endl;
-//	} else {
-//		std::cout << "File does not exist" << std::endl;
-//	}
-//}
-
 void Map::loadCreatedNodes(const char* fname) {
 	std::ifstream ifs(fname);
 	if (ifs) {
