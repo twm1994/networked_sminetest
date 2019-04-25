@@ -30,6 +30,16 @@ using namespace jthread;
 #include "server.h"
 #include "client.h"
 #include <string>
+#include "properties.h"
+
+//const char * material_stone = properties::getString("material", "stone",
+//		"../data/stone.png").c_str();
+//const char * material_grass = properties::getString("material", "grass",
+//		"../data/grass.png").c_str();
+//const char * material_water = properties::getString("material", "water",
+//		"../data/water.png").c_str();
+//const char *g_material_filenames[MATERIALS_COUNT] = { material_stone,
+//		material_grass, material_water };
 
 const char *g_material_filenames[MATERIALS_COUNT] = { "../data/stone.png",
 		"../data/grass.png", "../data/water.png", };

@@ -34,8 +34,7 @@ void * ServerNetworkThread::Thread() {
 }
 
 Server::Server() :
-		m_env(new Map(), dout_server), m_con(PROTOCOL_ID, 512), m_thread(
-				this) {
+		m_env(new Map(), dout_server), m_con(PROTOCOL_ID, 512), m_thread(this) {
 	m_env.getMap().load(SERVER_MAP_FILE);
 	m_env_mutex.Init();
 	m_con_mutex.Init();
@@ -187,7 +186,8 @@ void Server::ProcessData(u8 *data, u32 datasize, u16 peer_id) {
 			// #####Call getBlock here to create the block on server map if it is not created yet#####
 			v3s16 pos = v3s16((s16) ps.X / 100, (s16) ps.Y / 100,
 					(s16) ps.Z / 100);
-			m_env.getMap().getBlock(pos);
+			v3s16 blockPos = m_env.getMap().getNodeBlockPos(pos);
+			m_env.getMap().getBlock(blockPos);
 			v3s32 ss = readV3S32(&data[2 + 12]);
 			v3f position((f32) ps.X / 100., (f32) ps.Y / 100.,
 					(f32) ps.Z / 100.);
