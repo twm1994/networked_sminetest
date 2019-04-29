@@ -1,4 +1,4 @@
-# Simplified Minetest, Offline Version
+# Simplified Minetest, Networked Version
 
 This project is based on the [original repository](https://github.com/celeron55/minetest_nmpr), built on OMNeT++ 5.4.1 with MinGW GCC toolchain.
 
