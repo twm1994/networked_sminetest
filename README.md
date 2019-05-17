@@ -2,7 +2,7 @@
 
 This project is based on the [original repository](https://github.com/celeron55/minetest_nmpr), built on OMNeT++ 5.4.1 with MinGW GCC toolchain.
 
-This offline version is for testing map loading and saving, and keeps the interface for adding networking componets.
+This version is for testing map loading and saving, and keeps the interface for adding networking componets.
 
 ## Dependencies and tools
 
