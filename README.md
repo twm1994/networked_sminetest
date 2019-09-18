@@ -23,7 +23,7 @@ These changes are necessary to fix build errors
 
  - Download JThread, Irrlicht and JsonCpp source file
  - Use CMake to build JThread makefile
- - Run the makefile (Use msys on MinGW or GUN Make)
+ - Run the makefile (Use msys on MinGW or GNU Make)
  - Use Code::Block to build Irrlicht win32-gcc version .a and .dll files
  - Follow [the guide](https://github.com/open-source-parsers/jsoncpp/wiki/Amalgamated) to build JsonCpp amalgamated source and add it to the project
  - Make sure WS2_32 and gdi32 libraries are in the **Libraries** option of the OMNet++ project **Property**
